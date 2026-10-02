@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken')
+const { getJwtSecret } = require('../config')
 
 const protect = (req, res, next) => {
   try {
@@ -12,15 +13,18 @@ const protect = (req, res, next) => {
 
     const token = authHeader.split(' ')[1]
 
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    )
+    const decoded = jwt.verify(token, getJwtSecret())
 
     req.userId = decoded.userId
 
     next()
   } catch (error) {
+    if (error.message === 'JWT_SECRET is not configured') {
+      return res.status(503).json({
+        message: 'Authentication service is not configured'
+      })
+    }
+
     return res.status(401).json({
       message: 'Invalid or expired token'
     })

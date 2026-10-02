@@ -2,6 +2,7 @@ const express = require('express')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
+const { getJwtSecret } = require('../config')
 
 const router = express.Router()
 
@@ -114,7 +115,7 @@ router.post('/login', async (req, res) => {
       {
         userId: user._id
       },
-      process.env.JWT_SECRET,
+      getJwtSecret(),
       {
         expiresIn: '1d'
       }
@@ -135,6 +136,12 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error(error)
+
+    if (error.message === 'JWT_SECRET is not configured') {
+      return res.status(503).json({
+        message: 'Authentication service is not configured'
+      })
+    }
 
     res.status(500).json({
       message: 'Server error'
